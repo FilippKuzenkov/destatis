@@ -1,9 +1,10 @@
 """Export gold_turnover_vs_employment to a flat CSV for the Excel workbook.
 
-Filtered to the 5 sectors this project's write-up actually analyzed and
-checked (README.md's Evidence section, insights_log.md) — not all 68 codes,
-since the Excel Data tab should reflect exactly the data the findings were
-drawn from, not an arbitrary larger slice.
+Filtered to the 5 sectors analyzed in README.md/insights_log.md, not all 68
+codes — the Data tab should reflect exactly what the findings were drawn from.
+
+Semicolon-delimited, comma-decimal on the numeric columns — matches Destatis's
+own CSV convention and what German-locale Excel parses correctly on import.
 """
 
 import csv
@@ -29,6 +30,8 @@ COLUMNS = [
     "employment_yoy_pct",
     "growth_gap_pct",
 ]
+
+NUMERIC_COLUMNS = {"turnover_yoy_pct", "employment_yoy_pct", "growth_gap_pct"}
 
 
 def fetch_all_rows(client) -> list[dict]:
@@ -59,9 +62,13 @@ def main() -> None:
     os.makedirs("excel", exist_ok=True)
     out_path = "excel/gold_turnover_vs_employment.csv"
     with open(out_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=COLUMNS)
+        writer = csv.DictWriter(f, fieldnames=COLUMNS, delimiter=";")
         writer.writeheader()
-        writer.writerows(rows)
+        for row in rows:
+            for col in NUMERIC_COLUMNS:
+                if row[col] is not None:
+                    row[col] = str(row[col]).replace(".", ",")
+            writer.writerow(row)
 
     print(f"Wrote {out_path}")
 

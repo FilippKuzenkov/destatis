@@ -1,7 +1,7 @@
 """Pull Destatis GENESIS-Online table 45212-0002 (employment index in retail
 trade) and upsert into Supabase. Bronze layer: all WZ08 codes, unfiltered —
-filtering happens downstream, in silver/gold. Same fetch logic and proven
-minimal parameter set as pull_retail.py (see that file's comment on why).
+filtering happens downstream, in silver/gold. Same fetch logic and minimal
+parameter set as pull_retail.py.
 """
 
 import os
@@ -27,10 +27,8 @@ MONTH_NUMBER = {
     "September": 9, "October": 10, "November": 11, "December": 12,
 }
 
-# Destatis uses more than one missing-value placeholder — "-" (nothing to
-# report) and "x" (not meaningful/computable) both confirmed in this table's
-# real response, 2026-09-12: "x" shows up for WZ08-G-05's yoy_change_pct,
-# a code with only 2025 data and no 2024 baseline to compute a change against.
+# Two missing-value placeholders: "-" (nothing to report) and "x" (not
+# computable, e.g. no prior-year baseline for a YoY change).
 MISSING_VALUES = {"-", "x"}
 
 
@@ -67,9 +65,7 @@ def fetch_raw_csv() -> str:
 
 
 def parse_rows(raw_csv: str) -> list[dict]:
-    # Row shape confirmed by reading the raw response directly (2026-09-12,
-    # see DATA_SOURCES.md): code;description;year;month;index;yoy_change_pct —
-    # 6 fields, not the variable-value-column shape retail_turnover uses.
+    # Fixed 6-field shape: code;description;year;month;index;yoy_change_pct.
     rows = []
     for line in raw_csv.split("\n"):
         fields = line.split(";")

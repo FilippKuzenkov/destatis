@@ -26,9 +26,8 @@ MONTH_NUMBER = {
     "September": 9, "October": 10, "November": 11, "December": 12,
 }
 
-# Order confirmed by reading the raw CSV's own header rows on a real pull
-# (2026-09-12, see DATA_SOURCES.md) — the API's JSON wrapper doesn't expose
-# per-column semantics, only the embedded CSV text does.
+# Order matches the raw CSV's own embedded header — the JSON wrapper doesn't
+# expose per-column semantics.
 VALUE_COLUMNS = [
     ("constant", "unadjusted"),
     ("constant", "calendar_adjusted"),
@@ -48,13 +47,9 @@ def fetch_raw_csv() -> str:
             "password": GENESIS_PASSWORD,
         },
         data={
-            # Deliberately minimal — this exact set is confirmed (test_pull.json,
-            # 2026-09-12) to return full history. Adding the other documented but
-            # unused parameters, even as empty strings, was tried and broke this:
-            # an explicitly empty startyear/endyear narrowed results to the
-            # current year only, where omitting them entirely does not. The API
-            # treats "present but blank" differently from "absent" — not
-            # something the docs call out, found by comparing raw responses.
+            # Minimal parameter set — omit optional fields entirely rather than
+            # pass them blank. An explicitly empty startyear/endyear narrows the
+            # result to the current year only; omitting them returns full history.
             "name": TABLE_NAME,
             "area": "all",
             "compress": "true",
@@ -68,10 +63,8 @@ def fetch_raw_csv() -> str:
     status = payload["Status"]
     content = payload.get("Object")
     if content is None:
-        # A missing Object means the request genuinely failed — Code alone
-        # isn't a reliable signal, since the API also returns non-zero codes
-        # for benign auto-corrections (e.g. an odd `stand` format) while
-        # still returning real data.
+        # A missing Object means the request failed; Code alone isn't reliable
+        # since the API also returns non-zero codes on benign auto-corrections.
         raise RuntimeError(f"GENESIS API error: {status['Content']}")
     if status["Code"] != 0:
         print(f"GENESIS API warning (request still succeeded): {status['Content']}")
@@ -79,9 +72,7 @@ def fetch_raw_csv() -> str:
 
 
 def parse_rows(raw_csv: str) -> list[dict]:
-    # Only lines whose first field starts with "WZ08-" are real data rows —
-    # the table's metadata header and footer vary in length, so filtering on
-    # this is more robust than hardcoding a line count to skip.
+    # Only lines starting with "WZ08-" are data rows — header/footer length varies.
     rows = []
     for line in raw_csv.split("\n"):
         fields = line.split(";")

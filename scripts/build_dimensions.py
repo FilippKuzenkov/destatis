@@ -1,6 +1,6 @@
-"""Populate dim_sector and dim_date (silver layer) from the verified real
-code list and period range already confirmed in bronze (scan_bronze.py,
-2026-09-12). Reads from and writes to Supabase only — no local files.
+"""Populate dim_sector and dim_date (silver layer) from the real code list
+and period range present in bronze (see scan_bronze.py). Reads from and
+writes to Supabase only — no local files.
 """
 
 import os
@@ -36,9 +36,8 @@ def fetch_all_rows(client, table: str, columns: str) -> list[dict]:
 
 
 def classify_sector(code: str) -> dict:
-    # code looks like "WZ08-47", "WZ08-4711", "WZ08-G", "WZ08-47-02", "WZ08-G-05".
-    # Verified against the real 68-code list (scan_bronze.py, 2026-09-12) —
-    # every standard code fits length-based level 1-4, no exceptions found.
+    # Code shapes: "WZ08-47"/"WZ08-4711"/"WZ08-G" (standard, level by length),
+    # "WZ08-47-02" (alternate regrouping scheme).
     suffix = code[len("WZ08-"):]
     if "-" in suffix:
         base, _, _ = suffix.partition("-")
@@ -62,9 +61,8 @@ def build_dim_sector(client) -> None:
     for code, description in by_code.items():
         dim_rows.append({"wz08_code": code, "description": description, **classify_sector(code)})
 
-    # Parents before children — not strictly required (Postgres checks a
-    # self-referencing FK at end-of-statement for a bulk upsert, not per row),
-    # but keeps the batch readable and is a cheap safety net regardless.
+    # Parents before children — not required (Postgres checks the
+    # self-referencing FK at end-of-statement), just keeps the batch readable.
     dim_rows.sort(key=lambda r: (r["level"] is None, r["level"] or 0))
 
     client.table("dim_sector").upsert(dim_rows).execute()
