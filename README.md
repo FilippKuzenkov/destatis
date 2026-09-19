@@ -39,4 +39,4 @@ n8n/         the monthly-refresh workflow's Code node scripts + a canvas screens
 
 ## Tool stack
 
-Python (ingestion) · Supabase/Postgres (star schema) · Power BI (dashboard) · Excel (pivot workbook) · n8n (scheduled refresh).
+Python (ingestion) · Supabase/Postgres (database of choice) · Power BI (dashboard) · Excel (pivot workbook) · n8n (scheduled refresh).
