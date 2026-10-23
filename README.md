@@ -13,6 +13,8 @@ Two tables from Destatis's GENESIS-Online API, both monthly, by WZ2008 retail se
 
 Full acquisition steps, API auth, response format, and data-structure caveats: [`DATA_SOURCES.md`](DATA_SOURCES.md).
 
+**Source and licence.** Data source: Statistisches Bundesamt (Destatis), GENESIS-Online; data licence [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0) (Datenlizenz Deutschland – Namensnennung – Version 2.0). The tables, indices and charts in this repo are own calculations and own representations based on that data.
+
 ## Architecture
 
 - **Bronze** — raw pulls, long-format, upserted into Supabase/Postgres (`scripts/pull_retail.py`, `scripts/pull_employment.py`).
